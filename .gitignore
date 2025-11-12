@@ -1,0 +1,2 @@
+# Cloudflare WARP certificate (environment-specific)
+.devcontainer/cloudflare-ca.pem

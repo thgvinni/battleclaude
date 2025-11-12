@@ -5,6 +5,13 @@ ENV TZ="$TZ"
 
 ARG CLAUDE_CODE_VERSION=latest
 
+# Copy Cloudflare WARP certificate if it exists (for corporate networks)
+COPY cloudflare-ca.pem /usr/local/share/ca-certificates/cloudflare-ca.crt
+RUN update-ca-certificates
+
+# Configure Node.js to trust the WARP certificate
+ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
+
 # Install basic development tools and iptables/ipset
 RUN apt-get update && apt-get install -y --no-install-recommends \
   less \
@@ -34,7 +41,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install Google Cloud SDK
 RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | \
   tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
-  curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
+  curl --cacert /etc/ssl/certs/ca-certificates.crt https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
   gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg && \
   apt-get update && apt-get install -y google-cloud-sdk && \
   apt-get clean && rm -rf /var/lib/apt/lists/*

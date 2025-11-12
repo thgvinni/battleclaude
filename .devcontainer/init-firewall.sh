@@ -45,8 +45,11 @@ echo "Fetching GitHub IP ranges..."
 
 # Try authenticated request first if gh is available and authenticated
 if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
-    echo "Using authenticated GitHub API request..."
+    echo "Using authenticated GitHub API request via gh CLI..."
     gh_ranges=$(gh api /meta)
+elif [ -n "${GITHUB_TOKEN:-}" ]; then
+    echo "Using authenticated GitHub API request via GITHUB_TOKEN..."
+    gh_ranges=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/meta)
 else
     echo "Using unauthenticated GitHub API request (may be rate limited)..."
     gh_ranges=$(curl -s https://api.github.com/meta)

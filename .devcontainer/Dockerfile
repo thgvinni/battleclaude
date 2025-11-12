@@ -101,13 +101,16 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
 
 
-# Copy and set up firewall script
+# Copy and set up firewall script and YOLO mode script
 COPY init-firewall.sh /usr/local/bin/
+COPY yolo.sh /usr/local/bin/
 USER root
-RUN chmod +x /usr/local/bin/init-firewall.sh && \
-  echo "# Allow node user to run firewall script with preserved environment" > /etc/sudoers.d/node-firewall && \
-  echo "Defaults!/usr/local/bin/init-firewall.sh env_keep += \"GH_TOKEN\"" >> /etc/sudoers.d/node-firewall && \
-  echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" >> /etc/sudoers.d/node-firewall && \
+RUN chmod +x /usr/local/bin/init-firewall.sh /usr/local/bin/yolo.sh && \
+  echo "# Allow node user to run firewall and yolo scripts" > /etc/sudoers.d/node-firewall && \
+  echo "Defaults!/usr/local/bin/init-firewall.sh env_keep += \"GH_TOKEN HOME\"" >> /etc/sudoers.d/node-firewall && \
+  echo "Defaults!/usr/local/bin/yolo.sh env_keep += \"GH_TOKEN HOME CLAUDE_CONFIG_DIR\"" >> /etc/sudoers.d/node-firewall && \
+  echo "node ALL=(root) NOPASSWD: SETENV: /usr/local/bin/init-firewall.sh" >> /etc/sudoers.d/node-firewall && \
+  echo "node ALL=(ALL) NOPASSWD: /usr/local/bin/yolo.sh" >> /etc/sudoers.d/node-firewall && \
   chmod 0440 /etc/sudoers.d/node-firewall && \
   visudo -c -f /etc/sudoers.d/node-firewall
 USER node

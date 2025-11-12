@@ -1,2 +1,5 @@
 # Cloudflare WARP certificate (environment-specific)
 .devcontainer/cloudflare-ca.pem
+
+# User-specific Claude Code settings (each developer configures their own permissions)
+.devcontainer/.claude/settings.local.json

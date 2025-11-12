@@ -43,17 +43,19 @@ ipset create allowed-domains hash:net
 # Fetch GitHub meta information and aggregate + add their IP ranges
 echo "Fetching GitHub IP ranges..."
 
-# Try authenticated request first if gh is available and authenticated
-if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
-    echo "Using authenticated GitHub API request via gh CLI..."
-    gh_ranges=$(gh api /meta)
-elif [ -n "${GITHUB_TOKEN:-}" ]; then
-    echo "Using authenticated GitHub API request via GITHUB_TOKEN..."
-    gh_ranges=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/meta)
-else
-    echo "Using unauthenticated GitHub API request (may be rate limited)..."
-    gh_ranges=$(curl -s https://api.github.com/meta)
+# Use gh CLI for authenticated requests
+if ! command -v gh >/dev/null 2>&1; then
+    echo "ERROR: gh CLI is not installed"
+    exit 1
 fi
+
+if ! gh auth status >/dev/null 2>&1; then
+    echo "ERROR: gh CLI is not authenticated. Please run 'gh auth login'"
+    exit 1
+fi
+
+echo "Using authenticated GitHub API request via gh CLI..."
+gh_ranges=$(gh api /meta)
 
 if [ -z "$gh_ranges" ]; then
     echo "ERROR: Failed to fetch GitHub IP ranges"

@@ -42,14 +42,30 @@ ipset create allowed-domains hash:net
 
 # Fetch GitHub meta information and aggregate + add their IP ranges
 echo "Fetching GitHub IP ranges..."
-gh_ranges=$(curl -s https://api.github.com/meta)
+
+# Try authenticated request first if gh is available and authenticated
+if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
+    echo "Using authenticated GitHub API request..."
+    gh_ranges=$(gh api /meta)
+else
+    echo "Using unauthenticated GitHub API request (may be rate limited)..."
+    gh_ranges=$(curl -s https://api.github.com/meta)
+fi
+
 if [ -z "$gh_ranges" ]; then
     echo "ERROR: Failed to fetch GitHub IP ranges"
     exit 1
 fi
 
-if ! echo "$gh_ranges" | jq -e '.web and .api and .git' >/dev/null; then
+if echo "$gh_ranges" | jq -e '.message' >/dev/null 2>&1; then
+    echo "ERROR: GitHub API returned an error: $(echo "$gh_ranges" | jq -r '.message')"
+    echo "This is often due to rate limiting. Try authenticating with 'gh auth login'"
+    exit 1
+fi
+
+if ! echo "$gh_ranges" | jq -e '.hooks and .pages and .git' >/dev/null; then
     echo "ERROR: GitHub API response missing required fields"
+    echo "Response keys: $(echo "$gh_ranges" | jq -r 'keys | join(", ")')"
     exit 1
 fi
 
@@ -61,7 +77,7 @@ while read -r cidr; do
     fi
     echo "Adding GitHub range $cidr"
     ipset add allowed-domains "$cidr"
-done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
+done < <(echo "$gh_ranges" | jq -r '(.hooks + .web + .api + .git + .pages + .actions + .dependabot + .packages)[]' | sort -u | aggregate -q)
 
 # Resolve and add other allowed domains
 for domain in \

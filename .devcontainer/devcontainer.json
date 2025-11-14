@@ -10,8 +10,7 @@
     }
   },
   "runArgs": [
-    "--cap-add=NET_ADMIN",
-    "--cap-add=NET_RAW"
+    "--cap-add=NET_ADMIN"
   ],
   "customizations": {
     "vscode": {
@@ -43,7 +42,7 @@
   "remoteUser": "node",
   "mounts": [
     "source=claude-code-bashhistory-${devcontainerId},target=/commandhistory,type=volume",
-    "source=claude-code-config-${devcontainerId},target=/home/node/.claude,type=volume",
+    "source=${localWorkspaceFolder}/.devcontainer/.claude,target=/home/node/.claude,type=bind,consistency=cached",
     "source=${localEnv:HOME}/.config/gcloud,target=/home/node/.config/gcloud,type=bind,consistency=cached",
     "source=${localEnv:HOME}/.config/gh,target=/home/node/.config/gh,type=bind,consistency=cached"
   ],
@@ -53,8 +52,7 @@
     "POWERLEVEL9K_DISABLE_GITSTATUS": "true",
     "CLAUDE_CODE_USE_VERTEX": "${localEnv:CLAUDE_CODE_USE_VERTEX:1}",
     "ANTHROPIC_VERTEX_PROJECT_ID": "${localEnv:ANTHROPIC_VERTEX_PROJECT_ID}",
-    "CLOUD_ML_REGION": "${localEnv:CLOUD_ML_REGION:us-central1}",
-    "GH_TOKEN": "${localEnv:GH_TOKEN}"
+    "CLOUD_ML_REGION": "${localEnv:CLOUD_ML_REGION:us-central1}"
   },
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
   "workspaceFolder": "/workspace"
